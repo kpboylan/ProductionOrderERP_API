@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ERP_DBContext\**" />
+    <Compile Remove="ERP_Domain\**" />
+    <Compile Remove="ERP_Mapper\**" />
+    <Compile Remove="ERP_Model\**" />
+    <Compile Remove="ERP_Repository\**" />
+    <Compile Remove="ERP_Service\**" />
+    <Content Remove="ERP_DBContext\**" />
+    <Content Remove="ERP_Domain\**" />
+    <Content Remove="ERP_Mapper\**" />
+    <Content Remove="ERP_Model\**" />
+    <Content Remove="ERP_Repository\**" />
+    <Content Remove="ERP_Service\**" />
+    <EmbeddedResource Remove="ERP_DBContext\**" />
+    <EmbeddedResource Remove="ERP_Domain\**" />
+    <EmbeddedResource Remove="ERP_Mapper\**" />
+    <EmbeddedResource Remove="ERP_Model\**" />
+    <EmbeddedResource Remove="ERP_Repository\**" />
+    <EmbeddedResource Remove="ERP_Service\**" />
+    <None Remove="ERP_DBContext\**" />
+    <None Remove="ERP_Domain\**" />
+    <None Remove="ERP_Mapper\**" />
+    <None Remove="ERP_Model\**" />
+    <None Remove="ERP_Repository\**" />
+    <None Remove="ERP_Service\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ERP.Application\Service\User\UserService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="9.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.0.0" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+</Project>

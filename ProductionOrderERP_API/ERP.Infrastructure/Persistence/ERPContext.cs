@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProductionOrderERP_API.ERP.Core.Entity;
+using Npgsql.EntityFrameworkCore;
 
 namespace ProductionOrderERP_API.ERP.Infrastructure.Persistence
 {
@@ -20,16 +21,16 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Persistence
         public DbSet<UOM> UOM { get; set; }
         public DbSet<MaterialType> MaterialTypes { get; set; }
 
+        public DbSet<SensorData> SensorReadings { get; set; }
+        public DbSet<HumidityReading> HumidityReadings { get; set; }
+        public DbSet<Batch> Batches { get; set; }
+        public DbSet<FactoryRoom> FactoryRooms { get; set; }
+        public DbSet<PendingQueueMessage> PendingQueueMessages { get; set; }
+
         public ERPContext(DbContextOptions<ERPContext> options)
     : base(options)
         {
 
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer(
-                "Data Source = (localdb)\\MSSQLLocalDB; Initial Catalog = Production_ERP");
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using BCrypt.Net;
-
-namespace ProductionOrderERP_API.ERP.Core.Helper
+﻿namespace ProductionOrderERP_API.ERP.Core.Helper
 {
     public static class PasswordHelper
     {

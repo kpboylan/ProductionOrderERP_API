@@ -8,6 +8,7 @@ namespace ProductionOrderERP_API.ERP.Core.Interface
     public interface IMaterialRepository
     {
         Task<Material> CreateMaterialAsync(Material material);
+        Task<List<GetMaterialResponse>> GetActiveMaterialsNewAsync();
         Task<Material?> GetMaterialAsync(int materialId);
         Task<List<Material>> GetMaterialsAsync();
         Task<List<GetMaterialResponse>> GetMaterialsNewAsync();

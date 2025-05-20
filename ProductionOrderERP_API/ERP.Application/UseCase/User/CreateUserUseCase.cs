@@ -13,13 +13,25 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             _userRepository = userRepository;
         }
 
-        public async Task<User> Execute(User user)
+        public CreateUserUseCase() { }
+
+        public virtual async Task<User> Execute(User user)
         {
             user.DateCreated = DateTime.Now;
             user.DateModified = DateTime.Now;
-            user.Password = PasswordHelper.Hash(user.Password);
 
-            return await _userRepository.CreateUserAsync(user);
+            try
+            {
+                user.Password = PasswordHelper.Hash(user.Password);
+
+                return await _userRepository.CreateUserAsync(user);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

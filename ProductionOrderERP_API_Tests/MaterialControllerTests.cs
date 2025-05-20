@@ -20,6 +20,7 @@ namespace ProductionOrderERP_API_Tests
         private readonly MaterialController _controller;
         private readonly Mock<CreateMaterialUseCase> _mockCreateMaterialUseCase;
         private readonly Mock<GetMaterialUseCase> _mockGetMaterialUseCase;
+        private readonly Mock<GetActiveMaterialsUseCase> _mockGetActiveMaterialsUseCase;
         private readonly Mock<GetUOMsUseCase> _mockGetUOMsUseCase;
         private readonly Mock<UpdateMaterialUseCase> _mockUpdateMaterialUseCase;
         private readonly Mock<GetMaterialTypesUseCase> _mockGetMaterialTypesUseCase;
@@ -33,6 +34,7 @@ namespace ProductionOrderERP_API_Tests
             _mockRabbitMqMaterialService = new Mock<IRabbitMqMaterialService>();
             _mockCreateMaterialUseCase = new Mock<CreateMaterialUseCase>();
             _mockGetMaterialUseCase = new Mock<GetMaterialUseCase>();
+            _mockGetActiveMaterialsUseCase = new Mock<GetActiveMaterialsUseCase>();
             _mockGetUOMsUseCase = new Mock<GetUOMsUseCase>();
             _mockUpdateMaterialUseCase = new Mock<UpdateMaterialUseCase>();
             _mockGetMaterialTypesUseCase = new Mock<GetMaterialTypesUseCase>();
@@ -43,9 +45,10 @@ namespace ProductionOrderERP_API_Tests
                 _mockCreateMaterialUseCase.Object,
                 _mockGetUOMsUseCase.Object,
                 _mockGetMaterialsUseCase.Object,
+                _mockGetActiveMaterialsUseCase.Object,
                 _mockGetMaterialUseCase.Object,
                 _mockUpdateMaterialUseCase.Object,
-                _mockGetMaterialTypesUseCase.Object,           
+                _mockGetMaterialTypesUseCase.Object,
                 _mockPublishCreateMaterialUseCase.Object,
                 _mockPublishUpdateMaterialUseCase.Object
 

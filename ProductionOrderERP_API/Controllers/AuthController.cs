@@ -2,8 +2,7 @@
 using ProductionOrderERP_API.ERP.Application.DTO;
 using ProductionOrderERP_API.ERP.Application.UseCase;
 using ProductionOrderERP_API.ERP.Core.Entity;
-using ProductionOrderERP_API.ERP.Core.Interface;
-using ProductionOrderERP_API.ERP.Core.Service;
+using Serilog;
 
 namespace ProductionOrderERP_API.Controllers
 {
@@ -25,23 +24,33 @@ namespace ProductionOrderERP_API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
-            var userTask = _validateUserUseCase.Execute(loginRequest);
-
-            if (userTask == null)
+            try
             {
-                return Unauthorized("Invalid username or password.");
+                var userTask = _validateUserUseCase.Execute(loginRequest);
+
+                if (userTask == null)
+                {
+                    Log.Error("Invalid username or password.");
+                    return Unauthorized("Invalid username or password.");
+                }
+
+                User user = await userTask;
+
+                if (user == null)
+                {
+                    Log.Error("Invalid username or password.");
+                    return Unauthorized("Invalid username or password.");
+                }
+
+                var token = _generateTokenUseCase.Execute(user);
+
+                return Ok(new { Token = token });
             }
-
-            User user = await userTask;
-
-            if (user == null)
+            catch (Exception ex)
             {
-                return Unauthorized("Invalid username or password.");
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            var token = _generateTokenUseCase.Execute(user);
-
-            return Ok(new { Token = token });
         }
 
     }

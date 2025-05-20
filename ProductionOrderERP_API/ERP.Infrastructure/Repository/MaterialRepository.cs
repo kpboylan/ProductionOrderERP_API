@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using ProductionOrderERP_API.ERP.Application.DTO;
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Core.Interface;
@@ -18,41 +19,127 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
 
         public async Task<Material> CreateMaterialAsync(Material material)
         {
-            _context.Materials.Add(material);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Materials.Add(material);
+                await _context.SaveChangesAsync();
 
-            return await Task.FromResult(material);
+                return await Task.FromResult(material);
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<List<Material>> GetMaterialsAsync()
         {
-            return await _context.Materials.ToListAsync();
+            try
+            {
+                return await _context.Materials.ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<List<GetMaterialResponse>> GetMaterialsNewAsync()
         {
-            return await (from material in _context.Materials
-                          join uom in _context.UOM on material.UOMId equals uom.UOMID
-                          join materialType in _context.MaterialTypes on material.MaterialType equals materialType.MaterialTypeID
-                          select new GetMaterialResponse
-                          {
-                              MaterialID = material.MaterialID,
-                              MaterialType = material.MaterialType,
-                              UOMId = material.UOMId,
-                              MaterialName = material.MaterialName,
-                              Description = material.Description,
-                              CurrentStock = material.CurrentStock,
-                              UOMCode = uom.UOMCode,
-                              MaterialTypeAbbreviation = materialType.MaterialTypeAbbreviation,
-                                                                                                 
-                          }).ToListAsync();
+            try
+            {
+                return await (from material in _context.Materials
+                              join uom in _context.UOM on material.UOMId equals uom.UOMID
+                              join materialType in _context.MaterialTypes on material.MaterialType equals materialType.MaterialTypeID
+                              select new GetMaterialResponse
+                              {
+                                  MaterialID = material.MaterialID,
+                                  MaterialType = material.MaterialType,
+                                  UOMId = material.UOMId,
+                                  MaterialName = material.MaterialName,
+                                  Description = material.Description,
+                                  CurrentStock = material.CurrentStock,
+                                  UOMCode = uom.UOMCode,
+                                  MaterialTypeAbbreviation = materialType.MaterialTypeAbbreviation,
+
+                              }).ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<List<GetMaterialResponse>> GetActiveMaterialsNewAsync()
+        {
+            try
+            {
+                return await (from material in _context.Materials.Where(p => p.Active)
+                              //where material.Active 
+                              join uom in _context.UOM on material.UOMId equals uom.UOMID
+                              join materialType in _context.MaterialTypes on material.MaterialType equals materialType.MaterialTypeID
+                              select new GetMaterialResponse
+                              {
+                                  MaterialID = material.MaterialID,
+                                  MaterialType = material.MaterialType,
+                                  UOMId = material.UOMId,
+                                  MaterialName = material.MaterialName,
+                                  Description = material.Description,
+                                  CurrentStock = material.CurrentStock,
+                                  UOMCode = uom.UOMCode,
+                                  MaterialTypeAbbreviation = materialType.MaterialTypeAbbreviation,
+                                  Active = material.Active
+                              })
+                              .ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<Material?> GetMaterialAsync(int materialId)
         {
-            return await _context.Materials
-              .Where(p => p.MaterialID == materialId)
-              .FirstOrDefaultAsync();
+            try
+            {
+                return await _context.Materials
+                  .Where(p => p.MaterialID == materialId)
+                  .FirstOrDefaultAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<Material> UpdateMaterialAsync(Material material)
@@ -61,23 +148,55 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
             {
                 _context.Materials.Update(material);
                 await _context.SaveChangesAsync();
+
+                return material;
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
             }
             catch (Exception ex)
             {
-                Log.Error("Exception: {UpdateMaterialAsync}", ex);
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
             }
-
-            return material;
         }
 
         public async Task<List<MaterialType>> GetMaterialTypesAsync()
         {
-            return await _context.MaterialTypes.ToListAsync();
+            try
+            {
+                return await _context.MaterialTypes.ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<List<UOM>> GetUOMAsync()
         {
-            return await _context.UOM.ToListAsync();
+            try
+            {
+                return await _context.UOM.ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
     }
 }

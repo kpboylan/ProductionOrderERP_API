@@ -13,9 +13,6 @@ namespace ProductionOrderERP_API.Controllers
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
-        private readonly IProductRepository _productRepository;
-        private readonly IProductService _productService;
-        private readonly IMapper _mapper;
         private readonly ProductExistsUseCase _productExistsUseCase;
         private readonly UpdateProductUseCase _updateProductUseCase;
         private readonly GetProductByIdUseCase _getProductByIdUseCase;
@@ -23,9 +20,7 @@ namespace ProductionOrderERP_API.Controllers
         private readonly GetAllProductsUseCase _getAllProductsUseCase;
         private readonly CreateProductUseCase _createProductUseCase;
 
-        public ProductController(IProductService productService, 
-            IMapper mapper, 
-            IProductRepository productRepository,
+        public ProductController(
             ProductExistsUseCase productExistsUseCase,
             UpdateProductUseCase updateProductUseCase,
             GetProductByIdUseCase getProductByIdUseCase,
@@ -33,9 +28,6 @@ namespace ProductionOrderERP_API.Controllers
             GetAllProductsUseCase getAllProductsUseCase,
             CreateProductUseCase createProductUseCase)
         {
-            _productRepository = productRepository;
-            _productService = productService;
-            _mapper = mapper;
             _productExistsUseCase = productExistsUseCase;
             _updateProductUseCase = updateProductUseCase;
             _getProductByIdUseCase = getProductByIdUseCase;
@@ -52,8 +44,16 @@ namespace ProductionOrderERP_API.Controllers
                 return BadRequest("Product data is required.");
             }
 
-            var response = await _createProductUseCase.Execute(product);
-            return Ok(response);
+            try
+            {
+                var response = await _createProductUseCase.Execute(product);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpGet("all")]
@@ -63,14 +63,11 @@ namespace ProductionOrderERP_API.Controllers
             {
                 var productDtos = await _getAllProductsUseCase.Execute();
 
-                Log.Information("Hello world!");
-
-                Log.Debug("Number of Products returned: {ProductCount}", productDtos.Count);
-
                 return Ok(productDtos);
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -86,6 +83,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -101,6 +99,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -108,19 +107,27 @@ namespace ProductionOrderERP_API.Controllers
         [HttpPut("{productId}")]
         public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductRequest product, int productId)
         {
-            if (product == null)
+            try
             {
-                return BadRequest("Product data is null");
-            }
+                if (product == null)
+                {
+                    return BadRequest("Product data is null");
+                }
 
-            if (!await _productExistsUseCase.Execute(productId))
+                if (!await _productExistsUseCase.Execute(productId))
+                {
+                    return NotFound();
+                }
+
+                await _updateProductUseCase.Execute(productId, product);
+
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            await _updateProductUseCase.Execute(productId, product);
-
-            return NoContent();
         }
     }
 }

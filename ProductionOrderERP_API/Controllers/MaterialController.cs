@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
 using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Logging;
 using ProductionOrderERP_API.ERP.Application.DTO;
 using ProductionOrderERP_API.ERP.Application.UseCase;
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Core.Interface;
 using ProductionOrderERP_API.ERP.Core.Service;
+using ProductionOrderERP_API.ERP.Core.Helper;
+using Serilog;
 
 namespace ProductionOrderERP_API.Controllers
 {
@@ -15,6 +18,7 @@ namespace ProductionOrderERP_API.Controllers
     {
         private readonly CreateMaterialUseCase _createMaterialUseCase;
         private readonly GetMaterialsUseCase _getMaterialsUseCase;
+        private readonly GetActiveMaterialsUseCase _getActiveMaterialsUseCase;
         private readonly GetMaterialUseCase _getMaterialUseCase;
         private readonly GetUOMsUseCase _getUOMsUseCase;
         private readonly UpdateMaterialUseCase _updateMaterialUseCase;
@@ -26,6 +30,7 @@ namespace ProductionOrderERP_API.Controllers
             CreateMaterialUseCase createMaterialUseCase,
             GetUOMsUseCase getUOMsUseCase,
             GetMaterialsUseCase getMaterialsUseCase,
+            GetActiveMaterialsUseCase getActiveMaterialsUseCase,
             GetMaterialUseCase getMaterialUseCase,
             UpdateMaterialUseCase updateMaterialUseCase,
             GetMaterialTypesUseCase getMaterialTypesUseCase,
@@ -35,6 +40,7 @@ namespace ProductionOrderERP_API.Controllers
             _createMaterialUseCase = createMaterialUseCase;
             _getUOMsUseCase = getUOMsUseCase;
             _getMaterialsUseCase = getMaterialsUseCase;
+            _getActiveMaterialsUseCase = getActiveMaterialsUseCase;
             _getMaterialUseCase = getMaterialUseCase;
             _updateMaterialUseCase = updateMaterialUseCase;
             _getMaterialTypesUseCase = getMaterialTypesUseCase;
@@ -50,8 +56,17 @@ namespace ProductionOrderERP_API.Controllers
                 return BadRequest("Material data is required.");
             }
 
-            var response = await _createMaterialUseCase.Execute(material);
-            return Ok(response);
+            try
+            {
+                var response = await _createMaterialUseCase.Execute(material);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
         }
 
         [HttpPost("rabbitMqCreate")]
@@ -62,9 +77,18 @@ namespace ProductionOrderERP_API.Controllers
             {
                 return BadRequest("Material data is required.");
             }
-            var response = await _publishMaterialUseCase.Execute(material);
 
-            return Ok(response);
+            try
+            {
+                var response = await _publishMaterialUseCase.Execute(material);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpGet("all")]
@@ -78,6 +102,23 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveMaterials()
+        {
+            try
+            {
+                var materialDtos = await _getActiveMaterialsUseCase.Execute();
+
+                return Ok(materialDtos);
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -93,6 +134,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -105,9 +147,17 @@ namespace ProductionOrderERP_API.Controllers
                 return BadRequest("Material data is null");
             }
 
-            await _publishUpdateMaterialUseCase.Execute(material, materialId);
+            try
+            {
+                await _publishUpdateMaterialUseCase.Execute(material, materialId);
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpPut("{materialId}")]
@@ -118,9 +168,17 @@ namespace ProductionOrderERP_API.Controllers
                 return BadRequest("Material data is null");
             }
 
-            await _updateMaterialUseCase.Execute(materialId, material);
+            try
+            {
+                await _updateMaterialUseCase.Execute(materialId, material);
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpGet("materialTypes")]
@@ -134,6 +192,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -149,6 +208,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }

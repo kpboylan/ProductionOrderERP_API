@@ -17,8 +17,17 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
         public async Task<GetMaterialResponse> Execute(int materialId)
         {
-            var material = await _materialRepository.GetMaterialAsync(materialId);
-            return _mapper.Map<GetMaterialResponse>(material);
+            try
+            {
+                var material = await _materialRepository.GetMaterialAsync(materialId);
+                return _mapper.Map<GetMaterialResponse>(material);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

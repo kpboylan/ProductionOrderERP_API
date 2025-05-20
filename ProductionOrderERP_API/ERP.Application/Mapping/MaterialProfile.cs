@@ -28,6 +28,7 @@ namespace ProductionOrderERP_API.ERP.Application.Mapping
             CreateMap<Material, GetMaterialRequest>();
             CreateMap<GetMaterialResponse, Material>();
             CreateMap<Material, GetMaterialResponse>();
+            CreateMap<UpdateMaterialRequest, Material>();
 
         }
     }

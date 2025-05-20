@@ -17,10 +17,19 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
         public async Task<List<GetProductResponse>> Execute()
         {
-            var products = await _productRepository.GetAllProductsAsync();
-            var productDtos = _mapper.Map<List<GetProductResponse>>(products);
+            try
+            {
+                var products = await _productRepository.GetAllProductsAsync();
+                var productDtos = _mapper.Map<List<GetProductResponse>>(products);
 
-            return productDtos;
+                return productDtos;
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

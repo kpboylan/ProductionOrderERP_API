@@ -13,7 +13,16 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
         public async Task<bool> Execute()
         {
-            return await _productRepository.SaveChangesAsync();
+            try
+            {
+                return await _productRepository.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

@@ -12,6 +12,13 @@ using ProductionOrderERP_API.ERP.Core.Helper;
 using ProductionOrderERP_API.ERP.Infrastructure.Persistence;
 using ProductionOrderERP_API.ERP.Application.UseCase;
 using ProductionOrderERP_API.ERP.Infrastructure.Service;
+using ProductionOrderERP_API.ERP.Application.UseCase.Room.ML;
+using ProductionOrderERP_API.ERP.Application.UseCase.Room;
+using Microsoft.Extensions.Configuration;
+using System;
+using Polly.Wrap;
+using ProductionOrderERP_API.ERP.Application.Polly;
+using ProductionOrderERP_API.ERP.Core.Entity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,43 +28,72 @@ var logFileName = $"logs/log-{DateTime.Now:MM-dd-yyyy}.txt";
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
 
-builder.Services.AddTransient<IProdOrderService, ProdOrderService>();
-builder.Services.AddTransient<IProductRepository, ProductRepository>();
-builder.Services.AddTransient<IProductServiceHelper, ProductServiceHelper>();
-builder.Services.AddTransient<IUserRepository, UserRepository>();
-builder.Services.AddTransient<ITokenService, TokenService>();
-builder.Services.AddTransient<IMaterialRepository, MaterialRepository>();
-builder.Services.AddTransient(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
-builder.Services.AddTransient<CreateMaterialUseCase>();
-builder.Services.AddTransient<GetMaterialsUseCase>();
-builder.Services.AddTransient<GetMaterialUseCase>();
-builder.Services.AddTransient<UpdateMaterialUseCase>();
-builder.Services.AddTransient<GetMaterialTypesUseCase>();
-builder.Services.AddTransient<GetUOMsUseCase>();
-builder.Services.AddTransient<CreateUserUseCase>();
-builder.Services.AddTransient<GetUsersUseCase>();
-builder.Services.AddTransient<GetUserUseCase>();
-builder.Services.AddTransient<UpdateUserUseCase>();
-builder.Services.AddTransient<ValidateUserUseCase>();
-builder.Services.AddTransient<GetUserTypesUseCase>();
-builder.Services.AddTransient<PublishCreateMaterialUseCase>();
-builder.Services.AddTransient<PublishUpdateMaterialUseCase>();
-builder.Services.AddTransient<SaveChangesUseCase>();
-builder.Services.AddTransient<ProductExistsUseCase>();
-builder.Services.AddTransient<UpdateProductUseCase>();
-builder.Services.AddTransient<GetProductByIdUseCase>();
-builder.Services.AddTransient<GetActiveProductsUseCase>();
-builder.Services.AddTransient<GetAllProductsUseCase>();
-builder.Services.AddTransient<CreateProductUseCase>();
-builder.Services.AddTransient<ValidateUserUseCase>();
-builder.Services.AddTransient<GenerateTokenUseCase>();
+builder.Services.AddScoped<IProdOrderService, ProdOrderService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductServiceHelper, ProductServiceHelper>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+builder.Services.AddScoped<IRoomRepository, SqlServerRoomRepository>();
+builder.Services.AddScoped<IGetRoomTempUseCase, GetRoomTempUseCase>();
+builder.Services.AddScoped<IGetRoomHumidityUseCase, GetRoomHumidityUseCase>();
+builder.Services.AddScoped<IPendingMessageRepository, PendingMessageRepository>();
+builder.Services.AddScoped(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
+builder.Services.AddScoped<MessageBus>();
+builder.Services.AddScoped<CreateMaterialUseCase>();
+builder.Services.AddScoped<GetMaterialsUseCase>();
+builder.Services.AddScoped<GetActiveMaterialsUseCase>();
+builder.Services.AddScoped<GetMaterialUseCase>();
+builder.Services.AddScoped<UpdateMaterialUseCase>();
+builder.Services.AddScoped<GetMaterialTypesUseCase>();
+builder.Services.AddScoped<GetUOMsUseCase>();
+builder.Services.AddScoped<CreateUserUseCase>();
+builder.Services.AddScoped<GetUsersUseCase>();
+builder.Services.AddScoped<GetActiveUsersUseCase>();
+builder.Services.AddScoped<GetUserUseCase>();
+builder.Services.AddScoped<UpdateUserUseCase>();
+builder.Services.AddScoped<ValidateUserUseCase>();
+builder.Services.AddScoped<GetUserTypesUseCase>();
+builder.Services.AddScoped<PublishCreateMaterialUseCase>();
+builder.Services.AddScoped<PublishUpdateMaterialUseCase>();
+builder.Services.AddScoped<SaveChangesUseCase>();
+builder.Services.AddScoped<ProductExistsUseCase>();
+builder.Services.AddScoped<UpdateProductUseCase>();
+builder.Services.AddScoped<GetProductByIdUseCase>();
+builder.Services.AddScoped<GetActiveProductsUseCase>();
 
-builder.Services.AddDbContext<ERPContext>(
-    dbContextOptions => dbContextOptions.UseSqlServer("Data Source = (localdb)\\MSSQLLocalDB; Initial Catalog = Production_ERP"));
+
+builder.Services.AddScoped<GetAllProductsUseCase>();
+builder.Services.AddScoped<CreateProductUseCase>();
+builder.Services.AddScoped<ValidateUserUseCase>();
+builder.Services.AddScoped<GenerateTokenUseCase>();
+builder.Services.AddScoped<TempAnomalyDetection>();
+builder.Services.AddScoped<HumiditySpikeDetection>();
+builder.Services.AddScoped<PendingQueueMessage>();
+
+builder.Services.AddSingleton<IRabbitMqResiliencePolicyProvider, RabbitMqResiliencePolicyProvider>();
+
+
+builder.Services.AddSingleton<AsyncPolicyWrap>(provider =>
+{
+    var fallbackAction = () => Task.CompletedTask; // Replace with actual injected logic if needed
+    return PollyPolicies.CreateRabbitMqResiliencePolicy(fallbackAction);
+});
+
+if (builder.Configuration["DbSettings:DbProvider"] == "PostgresSQL")
+{
+    builder.Services.AddScoped<IRoomRepository, PostgresRoomRepository>();
+    builder.Services.AddDbContext<ERPContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+}
+else
+{
+    builder.Services.AddScoped<IRoomRepository, SqlServerRoomRepository>();
+    builder.Services.AddDbContext<ERPContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
+}
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c => {

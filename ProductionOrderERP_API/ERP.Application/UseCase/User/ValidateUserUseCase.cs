@@ -14,21 +14,25 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             _userRepository = userRepository;
         }
 
-        public async Task<User?> Execute(LoginRequest loginRequest)
+        public virtual async Task<User?> Execute(LoginRequest loginRequest)
         {
-            var user = await _userRepository.ValidateUser(loginRequest);
-
-            if (user == null || !PasswordHelper.Verify(loginRequest.Password, user.Password))
+            try
             {
-                return null;
+                var user = await _userRepository.ValidateUser(loginRequest);
+
+                if (user == null || !PasswordHelper.Verify(loginRequest.LoginPassword, user.Password))
+                {
+                    return null;
+                }
+
+                return user;
             }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
 
-            //if (user == null || !PasswordHelper.Verify(loginRequest.Password, "$2a$11$NuEk4aTn806AV4QZfP0TqeVFWv2x9Rk9Fzema/XPLKtsu/B7oy9cy"))
-            //{
-            //    return null;
-            //}
-
-            return user;
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

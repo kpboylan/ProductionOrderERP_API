@@ -17,26 +17,39 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             _mapper = mapper;
         }
 
-        public async Task<User?> Execute(int userId, GetUserRequest userDto)
+        public UpdateUserUseCase() { }
+
+        public virtual async Task<User?> Execute(int userId, GetUserRequest userDto)
         {
-            var existingUser = await _userRepository.GetUserAsync(userId);
-
-            if (existingUser == null)
+            try
             {
-                return null;
+                var userResponse = await _userRepository.GetUserAsync(userId);
+
+                if (userResponse == null)
+                {
+                    return null;
+                }
+
+                userDto.DateCreated = userResponse.DateCreated;
+                userDto.DateModified = DateTime.Now;
+
+                if (userResponse.Password != userDto.Password)
+                {
+                    userDto.Password = PasswordHelper.Hash(userDto.Password);
+                }
+
+                _mapper.Map(userDto, userResponse);
+
+                var userEntity = _mapper.Map<User>(userResponse);
+
+                return await _userRepository.UpdateUserAsync(userEntity);
             }
-
-            userDto.DateCreated = existingUser.DateCreated;
-            userDto.DateModified = DateTime.Now;
-
-            if (existingUser.Password != userDto.Password)
+            catch (Exception ex)
             {
-                userDto.Password = PasswordHelper.Hash(userDto.Password);
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
             }
-
-            _mapper.Map(userDto, existingUser);
-
-            return await _userRepository.UpdateUserAsync(existingUser);
         }
     }
 }

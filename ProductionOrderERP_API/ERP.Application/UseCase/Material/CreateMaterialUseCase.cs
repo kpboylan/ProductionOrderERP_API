@@ -23,15 +23,22 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
                 throw new ArgumentNullException(nameof(request));
             }
 
-            // Map the request to a material entity
-            var materialEntity = _mapper.Map<Material>(request);
+            try
+            {
+                var materialEntity = _mapper.Map<Material>(request);
 
-            await _materialRepository.CreateMaterialAsync(materialEntity);
+                await _materialRepository.CreateMaterialAsync(materialEntity);
 
-            // Map the entity to the response
-            var response = _mapper.Map<CreateMaterialResponse>(materialEntity);
+                var response = _mapper.Map<CreateMaterialResponse>(materialEntity);
 
-            return response;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

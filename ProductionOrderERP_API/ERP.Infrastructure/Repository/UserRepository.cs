@@ -4,6 +4,7 @@ using ProductionOrderERP_API.ERP.Core.Interface;
 using ProductionOrderERP_API.ERP.Infrastructure.Persistence;
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Application.DTO;
+using Microsoft.Data.SqlClient;
 
 namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
 {
@@ -23,16 +24,96 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
             return await Task.FromResult(user);
         }
 
-        public async Task<List<User>> GetUsersAsync()
+        public async Task<List<GetUserResponse>> GetUsersAsync()
         {
-            return await _context.Users.ToListAsync();
+            try
+            {
+                return await (from user in _context.Users
+                              join userType in _context.UserTypes on user.UserTypeID equals userType.UserTypeID
+                              select new GetUserResponse
+                              {
+                                  UserID = user.UserID,
+                                  FirstName = user.FirstName,
+                                  LastName = user.LastName,
+                                  Email = user.Email,
+                                  Type = userType.Type,
+                                  Username = user.Username,
+                                  Active = user.Active,
+
+                              }).ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
-        public async Task<User?> GetUserAsync(int userId)
+        public async Task<List<GetUserResponse>> GetActiveUsersAsync()
         {
-            return await _context.Users
-              .Where(p => p.UserID == userId)
-              .FirstOrDefaultAsync();
+            try
+            {
+                return await (from user in _context.Users.Where(p => p.Active)
+                              join userType in _context.UserTypes on user.UserTypeID equals userType.UserTypeID
+                              select new GetUserResponse
+                              {
+                                  UserID = user.UserID,
+                                  FirstName = user.FirstName,
+                                  LastName = user.LastName,
+                                  Email = user.Email,
+                                  Type = userType.Type,
+                                  Username = user.Username,
+                                  Active = user.Active,
+
+                              }).ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<GetUserResponse?> GetUserAsync(int userId)
+        {
+            try
+            {
+                return await (from user in _context.Users
+                              join userType in _context.UserTypes on user.UserTypeID equals userType.UserTypeID
+                              select new GetUserResponse
+                              {
+                                  UserID = user.UserID,
+                                  FirstName = user.FirstName,
+                                  LastName = user.LastName,
+                                  Email = user.Email,
+                                  Type = userType.Type,
+                                  Username = user.Username,
+                                  Password = user.Password,
+                                  UserTypeID = user.UserTypeID,
+                                  Active = user.Active,
+
+                              }).Where(p => p.UserID == userId).FirstOrDefaultAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<User> UpdateUserAsync(User user)
@@ -41,26 +122,61 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
             {
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
+
+                return user;
             }
-            catch(Exception ex)
+            catch (SqlException ex)
             {
-                Log.Error("Exception: {UpdateUserAsync}", ex.Message);
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
             }
-
-
-            return user;
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<User?> ValidateUser(LoginRequest loginRequest)
         {
-            return await _context.Users
-              .Where(p => p.Username == loginRequest.Username)
-              .FirstOrDefaultAsync();
+            try
+            {
+                //return await _context.Users
+                //  .Where(p => p.Username == loginRequest.LoginUsername)
+                //  .FirstOrDefaultAsync();
+                return await _context.Users
+                .Include(u => u.UserType)
+                .Where(p => p.Username == loginRequest.LoginUsername)
+                .FirstOrDefaultAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
 
         public async Task<List<UserType>> GetUserTypesAsync()
         {
-            return await _context.UserTypes.ToListAsync();
+            try
+            {
+                return await _context.UserTypes.ToListAsync();
+            }
+            catch (SqlException ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw new Exception("A database error occurred.", ex);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+                throw;
+            }
         }
     }
 }

@@ -12,53 +12,56 @@ namespace ProductionOrderERP_API.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IUserService _userService;
         private readonly IMapper _mapper;
         private readonly CreateUserUseCase _createUserUseCase;
         private readonly GetUsersUseCase _getUsersUseCase;
+        private readonly GetActiveUsersUseCase _getActiveUsersUseCase;
         private readonly GetUserUseCase _getUserUseCase;
         private readonly UpdateUserUseCase _updateUserUseCase;
-        private readonly ValidateUserUseCase _validateUserUseCase;
         private readonly GetUserTypesUseCase _getUserTypesUseCase;
-        public UserController(IUserRepository userRepository, 
-            IUserService userService, 
+        public UserController(
             IMapper mapper,
             CreateUserUseCase createUserUseCase,
             GetUsersUseCase getUsersUseCase,
+            GetActiveUsersUseCase getActiveUsersUseCase,
             GetUserUseCase getUserUseCase,
             UpdateUserUseCase updateUserUseCase,
-            ValidateUserUseCase validateUserUseCase,
             GetUserTypesUseCase getUserTypesUseCase)
         {
-            _userRepository = userRepository;
-            _userService = userService;
             _mapper = mapper;
             _createUserUseCase = createUserUseCase;
             _getUserUseCase = getUserUseCase;
             _getUsersUseCase = getUsersUseCase;
+            _getActiveUsersUseCase = getActiveUsersUseCase;
             _updateUserUseCase = updateUserUseCase;
-            _validateUserUseCase = validateUserUseCase;
             _getUserTypesUseCase = getUserTypesUseCase;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
         {
-            if (user == null)
+            try
             {
-                return BadRequest("User data is required.");
+                if (user == null)
+                {
+                    return BadRequest("User data is required.");
+                }
+
+                var userEntity = _mapper.Map<User>(user);
+                var createdUser = await _createUserUseCase.Execute(userEntity);
+
+                if (createdUser == null)
+                {
+                    return StatusCode(500, "An error occurred while creating the user.");
+                }
+
+                return CreatedAtAction(nameof(CreateUser), new { id = createdUser.UserID }, createdUser);
             }
-
-            var userEntity = _mapper.Map<User>(user);
-            var createdUser = await _createUserUseCase.Execute(userEntity);
-
-            if (createdUser == null)
+            catch (Exception ex)
             {
-                return StatusCode(500, "An error occurred while creating the user.");
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            return CreatedAtAction(nameof(CreateUser), new { id = createdUser.UserID }, createdUser);
         }
 
         [HttpGet("all")]
@@ -72,6 +75,23 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveUsers()
+        {
+            try
+            {
+                var userDtos = await _getActiveUsersUseCase.Execute();
+
+                return Ok(userDtos);
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -87,6 +107,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -99,9 +120,17 @@ namespace ProductionOrderERP_API.Controllers
                 return BadRequest("User data is null");
             }
 
-            await _updateUserUseCase.Execute(userId, user);
+            try
+            {
+                await _updateUserUseCase.Execute(userId, user);
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpGet("userTypes")]
@@ -115,6 +144,7 @@ namespace ProductionOrderERP_API.Controllers
             }
             catch (Exception ex)
             {
+                ERP.Core.Helper.LogHelper.LogControllerError(ControllerContext.ActionDescriptor.ControllerName, ex.Message);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }

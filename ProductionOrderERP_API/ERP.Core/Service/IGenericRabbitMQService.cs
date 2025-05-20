@@ -4,6 +4,6 @@ namespace ProductionOrderERP_API.ERP.Core.Service
 {
     public interface IGenericRabbitMQService<in T> where T : class
     {
-        Task<string> PublishAsync(T item, MessageBus messageBus);
+        Task<string> PublishAsync(T item, MessageBus messageBus, PendingQueueMessage pendingQueueMessage);
     }
 }

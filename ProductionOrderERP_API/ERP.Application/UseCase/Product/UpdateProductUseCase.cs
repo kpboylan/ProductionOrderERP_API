@@ -18,20 +18,29 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
         public async Task<UpdateProductResponse> Execute(int productId, UpdateProductRequest request)
         {
-            var existingProduct = await _productRepository.GetProductAsync(productId);
-
-            if (existingProduct == null)
+            try
             {
-                throw new KeyNotFoundException($"Product with ID {productId} not found.");
+                var existingProduct = await _productRepository.GetProductAsync(productId);
+
+                if (existingProduct == null)
+                {
+                    throw new KeyNotFoundException($"Product with ID {productId} not found.");
+                }
+
+                _mapper.Map(request, existingProduct);
+
+                await _productRepository.UpdateProductAsync(existingProduct);
+
+                var response = _mapper.Map<UpdateProductResponse>(existingProduct);
+
+                return response;
             }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
 
-            _mapper.Map(request, existingProduct);
-
-            await _productRepository.UpdateProductAsync(existingProduct);
-
-            var response = _mapper.Map<UpdateProductResponse>(existingProduct);
-
-            return response;
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

@@ -6,14 +6,11 @@ namespace ProductionOrderERP_API.ERP.Application.Enums
     {
         public enum MessageQueueName
         {
-            [Description("CreateMaterial")]
-            CreateMaterial,
+            [Description("AddMaterialQueue")]
+            AddMaterialQueue,
 
-            [Description("UpdateMaterial")]
-            UpdateMaterial,
-
-            [Description("DeleteMaterial")]
-            DeleteMaterial,
+            [Description("UpdateMaterialQueue")]
+            UpdateMaterialQueue,
         }
 
         public enum MessageHostName

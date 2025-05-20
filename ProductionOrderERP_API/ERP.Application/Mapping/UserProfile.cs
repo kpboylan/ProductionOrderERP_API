@@ -13,15 +13,18 @@ namespace ProductionOrderERP_API.ERP.Application.Mapping
             CreateMap<GetUserTypeResponse, UserType>();
             CreateMap<UserType, GetUserTypeResponse>();
 
-            CreateMap<CreateUserRequest, UserType>();
-            CreateMap<UserType, CreateUserRequest>();
-            CreateMap<CreateUserResponse, UserType>();
-            CreateMap<UserType, CreateUserResponse>();
+            CreateMap<CreateUserRequest, User>();
+            CreateMap<User, CreateUserRequest>();
+            CreateMap<CreateUserResponse, User>();
+            CreateMap<User, CreateUserResponse>();
 
-            CreateMap<GetUserRequest, UserType>();
-            CreateMap<UserType, GetUserRequest>();
-            CreateMap<GetUserResponse, UserType>();
-            CreateMap<UserType, GetUserResponse>();
+            CreateMap<GetUserRequest, User>();
+            CreateMap<User, GetUserRequest>();
+            CreateMap<GetUserResponse, User>();
+            CreateMap<User, GetUserResponse>();
+
+            CreateMap<GetUserRequest, GetUserResponse>();
+            CreateMap<GetUserResponse, GetUserRequest>();
         }
     }
 }

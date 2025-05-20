@@ -17,8 +17,17 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
         public async Task<List<GetUOMRequest>> Execute()
         {
-            var uoms = await _materialRepository.GetUOMAsync();
-            return _mapper.Map<List<GetUOMRequest>>(uoms);
+            try
+            {
+                var uoms = await _materialRepository.GetUOMAsync();
+                return _mapper.Map<List<GetUOMRequest>>(uoms);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

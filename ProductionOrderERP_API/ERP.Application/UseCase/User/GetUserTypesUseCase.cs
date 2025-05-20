@@ -15,10 +15,21 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             _mapper = mapper;
         }
 
-        public async Task<List<GetUserTypeResponse>> Execute()
+        public GetUserTypesUseCase() { }
+
+        public virtual async Task<List<GetUserTypeResponse>> Execute()
         {
-            var userTypes = await _userRepository.GetUserTypesAsync();
-            return _mapper.Map<List<GetUserTypeResponse>>(userTypes);
+            try
+            {
+                var userTypes = await _userRepository.GetUserTypesAsync();
+                return _mapper.Map<List<GetUserTypeResponse>>(userTypes);
+            }
+            catch (Exception ex)
+            {
+                Core.Helper.LogHelper.LogServiceError(this.GetType().Name, ex.Message);
+
+                throw new ApplicationException("An error occurred while processing your request.", ex);
+            }
         }
     }
 }

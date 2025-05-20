@@ -7,6 +7,7 @@ using ProductionOrderERP_API.ERP.Application.UseCase;
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Core.Interface;
 using ProductionOrderERP_API.ERP.Core.Service;
+using ProductionOrderERP_API.ERP.Infrastructure.Repository;
 using RabbitMQ.Client.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -111,47 +112,49 @@ namespace ProductionOrderERP_API_Tests
             Assert.Equal(4, callCount); // Retry 3 + initial
         }
 
-        //[Fact]
-        //public async Task UseCase_Falls_Back_To_Database_When_RabbitMq_Fails()
-        //{
-        //    // Arrange
-        //    var mockRepo = new Mock<IMaterialRepository>();
-        //    var mockRabbitService = new Mock<IGenericRabbitMQService<Material>>();
-        //    var mockMapper = new Mock<IMapper>();
-        //    var mockPolicyProvider = new RabbitMqResiliencePolicyProvider(); // or mock it too
+        [Fact]
+        public async Task UseCase_Falls_Back_To_Database_When_RabbitMq_Fails()
+        {
+            // Arrange
+            var mockPendingMessageRepo = new Mock<IPendingMessageRepository>();
+            var mockRepo = new Mock<IMaterialRepository>();
+            var mockRabbitService = new Mock<IGenericRabbitMQService<Material>>();
+            var mockMapper = new Mock<IMapper>();
+            var mockPolicyProvider = new RabbitMqResiliencePolicyProvider(); // or mock it too
 
-        //    var materialEntity = new Material { MaterialID = 123 };
-        //    var request = new PublishMaterialRequest { /* fields */ };
-        //    var response = new PublishMaterialResponse();
-        //    var pendingQueueMessage = new PendingQueueMessage();
+            var materialEntity = new Material { MaterialID = 123 };
+            var request = new PublishMaterialRequest { /* fields */ };
+            var response = new PublishMaterialResponse();
+            var pendingQueueMessage = new PendingQueueMessage();
 
-        //    mockMapper.Setup(m => m.Map<Material>(It.IsAny<PublishMaterialRequest>())).Returns(materialEntity);
-        //    mockMapper.Setup(m => m.Map<PublishMaterialResponse>(It.IsAny<Material>())).Returns(response);
+            mockMapper.Setup(m => m.Map<Material>(It.IsAny<PublishMaterialRequest>())).Returns(materialEntity);
+            mockMapper.Setup(m => m.Map<PublishMaterialResponse>(It.IsAny<Material>())).Returns(response);
 
-        //    mockRabbitService.Setup(m => m.PublishAsync(It.IsAny<Material>(), It.IsAny<MessageBus>()))
-        //                     .ThrowsAsync(new BrokerUnreachableException(new Exception("Fail")));
+            mockRabbitService.Setup(m => m.PublishAsync(It.IsAny<Material>(), It.IsAny<MessageBus>(), It.IsAny<PendingQueueMessage>()))
+                             .ThrowsAsync(new BrokerUnreachableException(new Exception("Fail")));
 
-        //    var resiliencePolicy = mockPolicyProvider.GetResiliencePolicy(async () =>
-        //    {
-        //        await mockRepo.Object.CreateMaterialAsync(materialEntity);
-        //    });
+            var resiliencePolicy = mockPolicyProvider.GetResiliencePolicy(async () =>
+            {
+                await mockRepo.Object.CreateMaterialAsync(materialEntity);
+            });
 
-        //    var useCase = new PublishCreateMaterialUseCase(
-        //        mockRabbitService.Object,   // IGenericRabbitMQService<Material>
-        //        mockMapper.Object,          // IMapper
-        //        resiliencePolicy,           // AsyncPolicyWrap
-        //        mockRepo.Object,            // IMaterialRepository
-        //        mockPolicyProvider,          // IRabbitMqResiliencePolicyProvider
-        //        pendingQueueMessage
-        //    );
+            var useCase = new PublishCreateMaterialUseCase(
+                mockRabbitService.Object,  
+                mockMapper.Object,    
+                resiliencePolicy,        
+                mockRepo.Object,           
+                mockPolicyProvider,       
+                pendingQueueMessage,
+                mockPendingMessageRepo.Object
+            );
 
 
-        //    // Act
-        //    var result = await useCase.Execute(request);
+            // Act
+            var result = await useCase.Execute(request);
 
-        //    // Assert
-        //    mockRepo.Verify(r => r.CreateMaterialAsync(It.Is<Material>(m => m.MaterialID == 123)), Times.Once);
-        //}
+            // Assert
+            mockRepo.Verify(r => r.CreateMaterialAsync(It.Is<Material>(m => m.MaterialID == 123)), Times.Once);
+        }
 
 
     }

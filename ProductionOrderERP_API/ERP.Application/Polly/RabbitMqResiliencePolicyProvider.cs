@@ -10,18 +10,6 @@ namespace ProductionOrderERP_API.ERP.Application.Polly
     {
         public AsyncPolicyWrap GetResiliencePolicy(Func<Task> fallbackAction)
         {
-            //var retryPolicy = Policy
-            //    .Handle<BrokerUnreachableException>()
-            //    .Or<AlreadyClosedException>()
-            //    .Or<TimeoutException>()
-            //    .Or<IOException>()
-            //    .WaitAndRetryAsync(
-            //        retryCount: 3,
-            //        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-            //        onRetry: (ex, ts, retryCount, ctx) =>
-            //            Core.Helper.LogHelper.LogServiceError(nameof(PollyPolicies), $"Retry {retryCount} due to {ex.Message}")
-            //    );
-
             var retryPolicy = Policy
                 .Handle<BrokerUnreachableException>()
                 .Or<AlreadyClosedException>()

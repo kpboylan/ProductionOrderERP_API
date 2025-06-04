@@ -17,7 +17,7 @@ namespace ProductionOrderERP_API.ERP.Core.Helper
 
         public static void LogInformation(string source, string message)
         {
-            Log.Information(FormatServiceErrorMessage(source, message));
+            Log.Information(FormatInformationMessage(source, message));
         }
 
         private static string FormatControllerErrorMessage(string source, string message)
@@ -32,6 +32,14 @@ namespace ProductionOrderERP_API.ERP.Core.Helper
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("Error occurred in {0} Service: {1}", source, message);
+
+            return sb.ToString();
+        }
+
+        private static string FormatInformationMessage(string source, string message)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat("Logged in {0} Service: {1}", source, message);
 
             return sb.ToString();
         }

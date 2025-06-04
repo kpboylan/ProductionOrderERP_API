@@ -25,7 +25,6 @@ namespace ProductionOrderERP_API.ERP.Application.Polly
                             $"Retry {retryCount} due to {ex.Message}"
                         );
 
-                        // Optional: update RetryCount in the PendingQueueMessage
                         if (ctx.ContainsKey("PendingMessage") && ctx["PendingMessage"] is PendingQueueMessage msg)
                         {
                             msg.RetryCount = retryCount;

@@ -44,5 +44,6 @@ namespace ProductionOrderERP_API.ERP.Core.Entity
         // Navigation property to UserType (if you have a UserType entity)
         [ForeignKey("UserTypeID")]
         public virtual UserType UserType { get; set; }
+        public int TenantID { get; set; }
     }
 }

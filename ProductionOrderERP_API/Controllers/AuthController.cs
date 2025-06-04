@@ -42,7 +42,7 @@ namespace ProductionOrderERP_API.Controllers
                     return Unauthorized("Invalid username or password.");
                 }
 
-                var token = _generateTokenUseCase.Execute(user);
+                var token = await _generateTokenUseCase.Execute(user);
 
                 return Ok(new { Token = token });
             }

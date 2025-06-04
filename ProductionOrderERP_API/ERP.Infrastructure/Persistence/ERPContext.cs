@@ -27,10 +27,25 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Persistence
         public DbSet<FactoryRoom> FactoryRooms { get; set; }
         public DbSet<PendingQueueMessage> PendingQueueMessages { get; set; }
 
+        public DbSet<FeatureFlag> FeatureFlags { get; set; }
+        public DbSet<FeatureFlagTenant> FeatureFlagTenants { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
+
         public ERPContext(DbContextOptions<ERPContext> options)
     : base(options)
         {
 
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<FeatureFlagTenant>()
+                .HasKey(ft => new { ft.FeatureFlagId, ft.TenantId });
+
+            modelBuilder.Entity<FeatureFlagTenant>()
+                .HasOne(ft => ft.FeatureFlag)
+                .WithMany(f => f.FeatureFlagTenants)
+                .HasForeignKey(ft => ft.FeatureFlagId);
         }
     }
 }

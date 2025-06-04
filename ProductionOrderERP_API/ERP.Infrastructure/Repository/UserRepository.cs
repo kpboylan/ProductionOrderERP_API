@@ -141,9 +141,6 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Repository
         {
             try
             {
-                //return await _context.Users
-                //  .Where(p => p.Username == loginRequest.LoginUsername)
-                //  .FirstOrDefaultAsync();
                 return await _context.Users
                 .Include(u => u.UserType)
                 .Where(p => p.Username == loginRequest.LoginUsername)

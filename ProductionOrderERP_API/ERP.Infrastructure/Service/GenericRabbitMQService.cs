@@ -1,23 +1,19 @@
 ﻿using Newtonsoft.Json;
-using Polly.Retry;
-using ProductionOrderERP_API.ERP.Application.Polly;
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Core.Service;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
 using System.Text;
 
 namespace ProductionOrderERP_API.ERP.Infrastructure.Service
 {
     public class GenericRabbitMQService<T> : IGenericRabbitMQService<T> where T : class
     {
-        private readonly bool _simulateFailure = true;
+        private readonly bool _simulateFailure = false;
 
         public async Task<string> PublishAsync(T item, MessageBus messageBus, PendingQueueMessage pendingQueueMessage)
         {
             if (_simulateFailure)
             {
-                //pendingQueueMessage.RetryCount++;
                 pendingQueueMessage.Payload = JsonConvert.SerializeObject(item);
 
                 throw new TimeoutException("Simulated RabbitMQ failure.");
@@ -36,9 +32,6 @@ namespace ProductionOrderERP_API.ERP.Infrastructure.Service
                                             arguments: null);
 
             var json = JsonConvert.SerializeObject(item);
-
-            //pendingQueueMessage.Payload = json;
-
             var body = Encoding.UTF8.GetBytes(json);
 
             var properties = new BasicProperties();

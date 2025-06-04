@@ -14,11 +14,11 @@ using ProductionOrderERP_API.ERP.Application.UseCase;
 using ProductionOrderERP_API.ERP.Infrastructure.Service;
 using ProductionOrderERP_API.ERP.Application.UseCase.Room.ML;
 using ProductionOrderERP_API.ERP.Application.UseCase.Room;
-using Microsoft.Extensions.Configuration;
-using System;
 using Polly.Wrap;
 using ProductionOrderERP_API.ERP.Application.Polly;
 using ProductionOrderERP_API.ERP.Core.Entity;
+using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.FeatureFilters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +27,14 @@ var logFileName = $"logs/log-{DateTime.Now:MM-dd-yyyy}.txt";
 
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
+
+var connectionString = builder.Configuration["AppConfigConnectionString"];
+
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options.Connect(connectionString)
+           .UseFeatureFlags();
+});
 
 builder.Services.AddScoped<IProdOrderService, ProdOrderService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -38,6 +46,7 @@ builder.Services.AddScoped<IRoomRepository, SqlServerRoomRepository>();
 builder.Services.AddScoped<IGetRoomTempUseCase, GetRoomTempUseCase>();
 builder.Services.AddScoped<IGetRoomHumidityUseCase, GetRoomHumidityUseCase>();
 builder.Services.AddScoped<IPendingMessageRepository, PendingMessageRepository>();
+builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
 builder.Services.AddScoped(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
 builder.Services.AddScoped<MessageBus>();
 builder.Services.AddScoped<CreateMaterialUseCase>();
@@ -70,8 +79,17 @@ builder.Services.AddScoped<GenerateTokenUseCase>();
 builder.Services.AddScoped<TempAnomalyDetection>();
 builder.Services.AddScoped<HumiditySpikeDetection>();
 builder.Services.AddScoped<PendingQueueMessage>();
+builder.Services.AddScoped<FeatureFlagRepository>();
+builder.Services.AddScoped<TenantRepository>();
 
 builder.Services.AddSingleton<IRabbitMqResiliencePolicyProvider, RabbitMqResiliencePolicyProvider>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<ITargetingContextAccessor, TenantTargetingContextAccessor>();
+
+builder.Services.AddFeatureManagement()
+    .AddFeatureFilter<TargetingFilter>();
+
 
 
 builder.Services.AddSingleton<AsyncPolicyWrap>(provider =>
@@ -140,7 +158,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = "yourdomain.com",
             ValidAudience = "yourdomain.com",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_super_secret_key"))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("thisisaverylongsecretkeythatis256bits"))
         };
     });
 
@@ -148,10 +166,15 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Debug: Print all configuration keys (filter for Azure App Config)
+var config = app.Services.GetRequiredService<IConfiguration>();
+Console.WriteLine("===== Configuration Keys =====");
+foreach (var entry in config.AsEnumerable())
+{
+    if (entry.Key.StartsWith("FeatureManagement:") || entry.Key.Contains("AzureAppConfig"))
+        Console.WriteLine($"{entry.Key} = {entry.Value}");
+}
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -160,7 +183,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+app.UseAuthentication();  // ✅ Must be before UseAuthorization
+app.UseAuthorization();   // ✅ Only once
 
 app.MapControllers();
 

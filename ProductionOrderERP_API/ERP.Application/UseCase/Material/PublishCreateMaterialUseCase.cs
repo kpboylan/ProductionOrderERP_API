@@ -29,6 +29,7 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             _mapper = mapper;
             _bus = new MessageBus();
             _bus.HostName = MessageQueue.MessageHostName.LocalHost.ToString();
+            //_bus.HostName = MessageQueue.DockerMessageHostName.rabbitmq.ToString();
             _bus.QueueName = MessageQueue.MessageQueueName.AddMaterialQueue.ToString();
             _policyProvider = policyProvider;
             _pendingQueueMessage = pendingQueueMessage;
@@ -46,6 +47,7 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
             try
             {
                 var materialEntity = _mapper.Map<Material>(request);
+
                 _pendingQueueMessage.EntityType = "Material";
                 _pendingQueueMessage.QueueName = _bus.QueueName;
 
@@ -54,11 +56,6 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase
 
                 var context = new Context();
                 context["PendingMessage"] = _pendingQueueMessage;
-
-                //await policy.ExecuteAsync(async () =>
-                //{
-                //    await _genericRabbitMQService.PublishAsync(materialEntity, _bus, _pendingQueueMessage);
-                //});
 
                 await policy.ExecuteAsync(async (ctx) =>
                 {

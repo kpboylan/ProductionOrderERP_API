@@ -63,8 +63,19 @@ namespace ProductionOrderERP_API.ERP.Application.UseCase.Room.ML
                 dto.RoomName = reading.RoomName;
 
                 // Filtering logic based on IsAnomaly parameter
-                if (!filterDto.IsAnomaly.HasValue || dto.IsAnomaly == filterDto.IsAnomaly.Value)
+                //if (!filterDto.IsAnomaly.HasValue || dto.IsAnomaly == filterDto.IsAnomaly.Value)
+                //{
+                //    dtoList.Add(dto);
+                //}
+
+                if (filterDto.IsAnomaly == true)
                 {
+                    if (dto.IsAnomaly)
+                        dtoList.Add(dto);
+                }
+                else
+                {
+                    // IsAnomaly is either false or null => include all
                     dtoList.Add(dto);
                 }
 

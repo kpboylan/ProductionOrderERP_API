@@ -2,16 +2,19 @@
 using ProductionOrderERP_API.ERP.Core.Entity;
 using ProductionOrderERP_API.ERP.Core.Helper;
 using ProductionOrderERP_API.ERP.Core.Interface;
+using ProductionOrderERP_API.ERP.Infrastructure.Repository;
 
 namespace ProductionOrderERP_API.ERP.Application.UseCase
 {
     public class ValidateUserUseCase
     {
         private readonly IUserRepository _userRepository;
+        private readonly TenantRepository _tenantRepository;
 
-        public ValidateUserUseCase(IUserRepository userRepository)
+        public ValidateUserUseCase(IUserRepository userRepository, TenantRepository tenantRepository)
         {
             _userRepository = userRepository;
+            _tenantRepository = tenantRepository;
         }
 
         public virtual async Task<User?> Execute(LoginRequest loginRequest)

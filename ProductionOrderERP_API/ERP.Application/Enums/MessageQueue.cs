@@ -18,5 +18,11 @@ namespace ProductionOrderERP_API.ERP.Application.Enums
             [Description("Localhost")]
             LocalHost,
         }
+
+        public enum DockerMessageHostName
+        {
+            [Description("rabbitmq")]
+            rabbitmq,
+        }
     }
 }
